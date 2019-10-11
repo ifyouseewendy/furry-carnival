@@ -9,54 +9,114 @@ import { find, filter } from 'lodash';
 import { makeExecutableSchema } from 'graphql-tools';
 
 const typeDefs = `
-  type Author {
-    id: Int!
-    firstName: String
-    lastName: String
-    posts: [Post] # the list of Posts by this author
+  type ExtensionPoint {
+    name: String!
+    schema: String!
   }
 
-  type Post {
-    id: Int!
-    title: String
-    author: Author
-    votes: Int
+  type AppScript {
+    appId: ID!
+    extensionPointName: String!
+    inputSchema: String!
+    configSchema: String!
   }
 
-  # the schema allows the following query:
+  type ShopScript {
+    shopId: ID!
+    extensionPointName: String!
+    configOverrides: String!
+    appScript: AppScript!
+  }
+
+  type AppScriptPayload {
+    userErrors: [UserError!]!
+    appScript: AppScript
+  }
+
+  type ShopScriptPayload {
+    userErrors: [UserError!]!
+    shopScript: ShopScript
+  }
+
+  type UserError {
+    message: String!
+
+    # Path to input field which caused the error.
+    field: [String!]
+  }
+
   type Query {
-    posts: [Post]
-    author(id: Int!): Author
+    extensionPoints: [ExtensionPoint!]!
+    appScript(appId: ID!, extensionPointName: String!): AppScriptPayload
+    shopScript(appId: ID!, shopId: ID!, extensionPointName: String!): ShopScriptPayload
   }
 
-  # this schema allows the following mutation:
+  input ShopScriptID {
+    appId: ID!
+    shopId: ID!
+    extensionPointName: String!
+  }
+  input AppScriptID {
+    appId: ID!
+    extensionPointName: String!
+  }
+
   type Mutation {
-    upvotePost (
-      postId: Int!
-    ): Post
+    appScriptCreateOrUpdate (
+      id: AppScriptID!
+      inputSchema: String
+      configSchema: String
+      wasm: String
+    ): AppScriptPayload
+
+    shopScriptCreate (
+      id: ShopScriptID!
+      configOverrides: String!
+    ): ShopScriptPayload
+
+    shopScriptUpdate (
+      id: ShopScriptID!
+      configOverrides: String
+    ): ShopScriptPayload
+
+    shopScriptDelete (
+      id: ShopScriptID!
+    ): ShopScriptPayload
+
   }
 `;
 
 const resolvers = {
   Query: {
-    posts: () => posts,
-    author: (_, { id }) => find(authors, { id: id }),
+    extensionPoints: () => extensionPoints,
+    appScript: (_, { appId, extensionPointName }) => (
+      { userErrors: [], appScript: find(appScripts, { appId: appId, extensionPointName: extensionPointName }) }
+    ),
+    shopScript: (_, { appId, shopId, extensionPointName }) => (
+      { userErrors: [], shopScript: find(shopScripts, { appId: appId, shopId: shopId, extensionPointName: extensionPointName }) }
+    ),
   },
   Mutation: {
-    upvotePost: (_, { postId }) => {
-      const post = find(posts, { id: postId });
-      if (!post) {
-        throw new Error(`Couldn't find post with id ${postId}`);
-      }
-      post.votes += 1;
-      return post;
+    appScriptCreateOrUpdate: (_, { appId, extensionPointName, inputSchema, configSchema, wasm }) => {
+      let as = { appId, extensionPointName, inputSchema, configSchema, wasm };
+      appScripts.push(as);
+      return { userErrors: [], appScript: as }
     },
-  },
-  Author: {
-    posts: (author) => filter(posts, { authorId: author.id }),
-  },
-  Post: {
-    author: (post) => find(authors, { id: post.authorId }),
+    shopScriptCreate: (_, { appId, shopId, extensionPointName, configOverrides }) => {
+      let ss = { appId, shopId, extensionPointName, configOverrides };
+      shopScripts.push(ss);
+      return { userErrors: [], shopScript: ss }
+    },
+    shopScriptUpdate: (_, { appId, shopId, extensionPointName, configOverrides }) => {
+      let ss = find(shopScripts, { appId: appId, shopId: shopId, extensionPointName: extensionPointName });
+      // update
+      return { userErrors: [], shopScript: ss }
+    },
+    shopScriptDelete: (_, { appId, shopId, extensionPointName, configOverrides }) => {
+      let ss = find(shopScripts, { appId: appId, shopId: shopId, extensionPointName: extensionPointName });
+      // delete
+      return { userErrors: [], shopScript: null }
+    },
   },
 };
 
@@ -65,15 +125,20 @@ export const schema = makeExecutableSchema({
   resolvers,
 });
 
-const authors = [
-  { id: 1, firstName: 'Tom', lastName: 'Coleman' },
-  { id: 2, firstName: 'Sashko', lastName: 'Stubailo' },
-  { id: 3, firstName: 'Mikhail', lastName: 'Novikov' },
+const extensionPoints = [
+  { name: 'discount', schema: '{}' },
+  { name: 'vanity_pricing', schema: '{}' },
+  { name: 'shipping', schema: '{}' },
 ];
 
-const posts = [
-  { id: 1, authorId: 1, title: 'Introduction to GraphQL', votes: 2 },
-  { id: 2, authorId: 2, title: 'Welcome to Apollo', votes: 3 },
-  { id: 3, authorId: 2, title: 'Advanced GraphQL', votes: 1 },
-  { id: 4, authorId: 3, title: 'Launchpad is Cool', votes: 7 },
+const appScripts = [
+  { appId: '1', extensionPointName: 'discount',       inputSchema: '{}', configSchema: '{ discount: Int }' },
+  { appId: '2', extensionPointName: 'vanity_pricing', inputSchema: '{}', configSchema: '' },
+  { appId: '3', extensionPointName: 'shipping',       inputSchema: '{}', configSchema: '' },
+];
+
+const shopScripts = [
+  { appId: '1', shopId: '1', extensionPointName: 'discount', configOverrides: '{ discount: 99 }'},
+  { appId: '1', shopId: '2', extensionPointName: 'discount', configOverrides: '{ discount: 95 }'},
+  { appId: '1', shopId: '3', extensionPointName: 'discount', configOverrides: '{ discount: 90 }'},
 ];

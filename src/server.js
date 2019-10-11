@@ -50,12 +50,24 @@ server.use('/graphiql', graphiqlExpress({
   endpointURL: '/graphql',
   query: `# Welcome to GraphiQL
 
-query PostsForAuthor {
-  author(id: 1) {
-    firstName
-    posts {
-      title
-      votes
+query ExtensionPoints {
+  extensionPoints {
+    name
+    schema
+  }
+  appScript(appId: 1, extensionPointName: "discount") {
+    appScript {
+      appId
+      extensionPointName
+      inputSchema
+      configSchema
+    }
+  }
+  shopScript(appId: 1, shopId: 2, extensionPointName: "discount") {
+    shopScript {
+      shopId
+      extensionPointName
+      configOverrides
     }
   }
 }`,
