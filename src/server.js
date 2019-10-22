@@ -4,7 +4,7 @@ import bodyParser from 'body-parser';
 
 import * as Schema from './schema';
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const server = express();
 
 
