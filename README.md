@@ -1,9 +1,13 @@
 ## Quick start guide
 
+Run locally
+
 ```bash
 npm install
 
 npm start
 ```
 
-This project was created with [Apollo Launchpad](https://launchpad.graphql.com)
+Check on production
+
+https://furry-carnival.herokuapp.com/graphiql
