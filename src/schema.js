@@ -13,42 +13,25 @@ const typeDefs = `
     name: String!
     schema: String!
   }
-
   type AppScript {
     appId: ID!
     extensionPointName: String!
+    title: String!
     inputSchema: String!
     configSchema: String!
   }
-
   type ShopScript {
     shopId: ID!
     extensionPointName: String!
+    title: String!
     configOverrides: String!
     appScript: AppScript!
   }
 
-  type AppScriptPayload {
-    userErrors: [UserError!]!
-    appScript: AppScript
-  }
-
-  type ShopScriptPayload {
-    userErrors: [UserError!]!
-    shopScript: ShopScript
-  }
-
-  type UserError {
-    message: String!
-
-    # Path to input field which caused the error.
-    field: [String!]
-  }
-
   type Query {
     extensionPoints: [ExtensionPoint!]!
-    appScript(appId: ID!, extensionPointName: String!): AppScriptPayload
-    shopScript(appId: ID!, shopId: ID!, extensionPointName: String!): ShopScriptPayload
+    appScript(appId: ID!, extensionPointName: String!): AppScript
+    shopScript(appId: ID!, shopId: ID!, extensionPointName: String!): ShopScript
   }
 
   input ShopScriptID {
@@ -61,21 +44,40 @@ const typeDefs = `
     extensionPointName: String!
   }
 
+  type AppScriptPayload {
+    userErrors: [UserError!]!
+    appScript: AppScript
+  }
+  type ShopScriptPayload {
+    userErrors: [UserError!]!
+    shopScript: ShopScript
+  }
+
+  type UserError {
+    message: String!
+
+    # Path to input field which caused the error.
+    field: [String!]
+  }
+
   type Mutation {
     appScriptCreateOrUpdate (
       id: AppScriptID!
+      title: String
+      wasm: String
       inputSchema: String
       configSchema: String
-      wasm: String
     ): AppScriptPayload
 
     shopScriptCreate (
       id: ShopScriptID!
+      title: String!
       configOverrides: String!
     ): ShopScriptPayload
 
     shopScriptUpdate (
       id: ShopScriptID!
+      title: String!
       configOverrides: String
     ): ShopScriptPayload
 
@@ -89,25 +91,21 @@ const typeDefs = `
 const resolvers = {
   Query: {
     extensionPoints: () => extensionPoints,
-    appScript: (_, { appId, extensionPointName }) => (
-      { userErrors: [], appScript: find(appScripts, { appId: appId, extensionPointName: extensionPointName }) }
-    ),
-    shopScript: (_, { appId, shopId, extensionPointName }) => (
-      { userErrors: [], shopScript: find(shopScripts, { appId: appId, shopId: shopId, extensionPointName: extensionPointName }) }
-    ),
+    appScript: (_, { appId, extensionPointName }) => find(appScripts, { appId: appId, extensionPointName: extensionPointName }),
+    shopScript: (_, { appId, shopId, extensionPointName }) => find(shopScripts, { appId: appId, shopId: shopId, extensionPointName: extensionPointName }),
   },
   Mutation: {
-    appScriptCreateOrUpdate: (_, { appId, extensionPointName, inputSchema, configSchema, wasm }) => {
-      let as = { appId, extensionPointName, inputSchema, configSchema, wasm };
+    appScriptCreateOrUpdate: (_, { appId, extensionPointName, title, inputSchema, configSchema, wasm }) => {
+      let as = { appId, extensionPointName, title, inputSchema, configSchema, wasm };
       appScripts.push(as);
       return { userErrors: [], appScript: as }
     },
-    shopScriptCreate: (_, { appId, shopId, extensionPointName, configOverrides }) => {
-      let ss = { appId, shopId, extensionPointName, configOverrides };
+    shopScriptCreate: (_, { appId, shopId, extensionPointName, title, configOverrides }) => {
+      let ss = { appId, shopId, extensionPointName, title, configOverrides };
       shopScripts.push(ss);
       return { userErrors: [], shopScript: ss }
     },
-    shopScriptUpdate: (_, { appId, shopId, extensionPointName, configOverrides }) => {
+    shopScriptUpdate: (_, { appId, shopId, extensionPointName, title, configOverrides }) => {
       let ss = find(shopScripts, { appId: appId, shopId: shopId, extensionPointName: extensionPointName });
       // update
       return { userErrors: [], shopScript: ss }
@@ -132,13 +130,13 @@ const extensionPoints = [
 ];
 
 const appScripts = [
-  { appId: '1', extensionPointName: 'discount',       inputSchema: '{}', configSchema: '{ discount: Int }' },
-  { appId: '2', extensionPointName: 'vanity_pricing', inputSchema: '{}', configSchema: '' },
-  { appId: '3', extensionPointName: 'shipping',       inputSchema: '{}', configSchema: '' },
+  { appId: '1', extensionPointName: 'discount',       title: "1", inputSchema: '{}', configSchema: '{ discount: Int }' },
+  { appId: '2', extensionPointName: 'vanity_pricing', title: "2", inputSchema: '{}', configSchema: '' },
+  { appId: '3', extensionPointName: 'shipping',       title: "3", inputSchema: '{}', configSchema: '' },
 ];
 
 const shopScripts = [
-  { appId: '1', shopId: '1', extensionPointName: 'discount', configOverrides: '{ discount: 99 }'},
-  { appId: '1', shopId: '2', extensionPointName: 'discount', configOverrides: '{ discount: 95 }'},
-  { appId: '1', shopId: '3', extensionPointName: 'discount', configOverrides: '{ discount: 90 }'},
+  { appId: '1', shopId: '1', extensionPointName: 'discount', title: "1", configOverrides: '{ discount: 99 }'},
+  { appId: '1', shopId: '2', extensionPointName: 'discount', title: "2", configOverrides: '{ discount: 95 }'},
+  { appId: '1', shopId: '3', extensionPointName: 'discount', title: "3", configOverrides: '{ discount: 90 }'},
 ];

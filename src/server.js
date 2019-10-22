@@ -56,19 +56,17 @@ query ExtensionPoints {
     schema
   }
   appScript(appId: 1, extensionPointName: "discount") {
-    appScript {
-      appId
-      extensionPointName
-      inputSchema
-      configSchema
-    }
+    appId
+    extensionPointName
+    title
+    inputSchema
+    configSchema
   }
   shopScript(appId: 1, shopId: 2, extensionPointName: "discount") {
-    shopScript {
-      shopId
-      extensionPointName
-      configOverrides
-    }
+    shopId
+    extensionPointName
+    title
+    configOverrides
   }
 }`,
 }));
