@@ -55,18 +55,18 @@ query ExtensionPoints {
     name
     schema
   }
-  appScript(appId: 1, extensionPointName: "discount") {
-    appId
+  appScript(appKey: 1, extensionPointName: "discount") {
+    appKey
     extensionPointName
     title
     inputSchema
     configSchema
   }
-  shopScript(appId: 1, shopId: 2, extensionPointName: "discount") {
+  shopScript(appKey: 1, shopId: 2, extensionPointName: "discount") {
     shopId
     extensionPointName
     title
-    configOverrides
+    configuration
   }
 }`,
 }));
