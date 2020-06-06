@@ -20,6 +20,6 @@
     "lodash": "^4.17.4",
     "nodemon": "^1.11.0",
     "graphql-tools": "^0.11.0",
-    "apollo-server-express": "^1.2.0"
+    "apollo-server-express": "^2.14.2"
   }
 }
